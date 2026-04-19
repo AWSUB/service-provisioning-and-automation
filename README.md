@@ -8,4 +8,4 @@ This repository covers the following:
 2.  Containerization (Docker and Kubernetes)
 3.  Configuration Management (Ansible)
 4.  Infrastructure a Code (Terraform)
-5.  CI/CD Pipeline
+5.  CI/CD Pipeline (Jenkins)
