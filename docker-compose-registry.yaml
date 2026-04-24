@@ -1,5 +1,0 @@
-services:
-  web:
-    image: docker.io/whateveraws/personal:containerization-spa
-    ports:
-      - "8080:8080"

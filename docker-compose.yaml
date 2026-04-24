@@ -1,6 +1,0 @@
-services:
-  web:
-    build: .
-    image: containerization-spa:testing
-    ports:
-      - "8080:8080"
