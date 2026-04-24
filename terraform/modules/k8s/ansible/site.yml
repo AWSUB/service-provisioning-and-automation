@@ -1,0 +1,24 @@
+---
+- name: Configure all nodes (common setup)
+  hosts: all
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - common
+
+- name: Configure master node
+  hosts: master
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - master
+
+- name: Configure worker node
+  hosts: worker
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - worker

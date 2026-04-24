@@ -6,6 +6,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
+    ansible = {
+      source  = "ansible/ansible"
+      version = "~> 1.4"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -37,9 +45,9 @@ resource "aws_internet_gateway" "k8s_igw" {
 }
 
 resource "aws_subnet" "k8s_subnet" {
-  vpc_id     = aws_vpc.k8s_vpc.id
-  cidr_block = "10.0.1.0/24"
-  availability_zone = "${var.aws_region}a"
+  vpc_id                  = aws_vpc.k8s_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = true
 
   tags = {
@@ -69,7 +77,7 @@ resource "aws_security_group" "k8s_sg" {
   name        = "k8s-sg"
   description = "Security group for Kubernetes cluster"
   vpc_id      = aws_vpc.k8s_vpc.id
-  
+
   # SSH
   ingress {
     from_port   = 22
@@ -88,17 +96,17 @@ resource "aws_security_group" "k8s_sg" {
 
   # Allow all traffic within the VPC
   ingress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["10.0.0.0/16"]
   }
 
   # NodePort range for Kubernetes services
   ingress {
-    from_port = 30000
-    to_port = 32767
-    protocol = "tcp"
+    from_port   = 30000
+    to_port     = 32767
+    protocol    = "tcp"
     cidr_blocks = [var.my_ip]
   }
 
@@ -116,10 +124,10 @@ resource "aws_security_group" "k8s_sg" {
 }
 
 resource "aws_instance" "k8s_master" {
-  ami           = var.instance_image
-  instance_type = var.instance_type_master
-  subnet_id     = aws_subnet.k8s_subnet.id
-  key_name      = aws_key_pair.k8s_key_pair.key_name
+  ami                    = var.instance_image
+  instance_type          = var.instance_type_master
+  subnet_id              = aws_subnet.k8s_subnet.id
+  key_name               = aws_key_pair.k8s_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.k8s_sg.id]
 
   root_block_device {
@@ -134,10 +142,10 @@ resource "aws_instance" "k8s_master" {
 }
 
 resource "aws_instance" "k8s_worker" {
-  ami           = var.instance_image
-  instance_type = var.instance_type_worker
-  subnet_id     = aws_subnet.k8s_subnet.id
-  key_name      = aws_key_pair.k8s_key_pair.key_name
+  ami                    = var.instance_image
+  instance_type          = var.instance_type_worker
+  subnet_id              = aws_subnet.k8s_subnet.id
+  key_name               = aws_key_pair.k8s_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.k8s_sg.id]
 
   root_block_device {
@@ -148,5 +156,53 @@ resource "aws_instance" "k8s_worker" {
   tags = {
     Name = "k8s-worker"
     Role = "node"
+  }
+}
+
+# Docs: https://registry.terraform.io/providers/ansible/ansible/latest/docs/resources/playbook
+
+data "ansible_inventory" "k8s_inventory" {
+  group {
+    name = "master"
+
+    host {
+      name                     = aws_instance.k8s_master.public_ip
+      ansible_user             = "ec2-user"
+      ansible_private_key_file = var.private_key_path
+      ansible_ssh_common_args  = "-o StrictHostKeyChecking=no"
+    }
+  }
+  group {
+    name = "worker"
+
+    host {
+      name                     = aws_instance.k8s_worker.public_ip
+      ansible_user             = "ec2-user"
+      ansible_private_key_file = var.private_key_path
+      ansible_ssh_common_args  = "-o StrictHostKeyChecking=no"
+    }
+  }
+
+  depends_on = [
+    aws_instance.k8s_master,
+    aws_instance.k8s_worker
+  ]
+}
+
+resource "null_resource" "k8s_setup" {
+  lifecycle {
+    action_trigger {
+      events = [ after_create ]
+      actions = [ action.ansible_playbook_run.k8s_setup ]
+    }
+  }
+
+  depends_on = [ data.ansible_inventory.k8s_inventory ]
+}
+
+action "ansible_playbook_run" "k8s_setup" {
+  config {
+    playbooks   = ["${path.module}/ansible/site.yml"]
+    inventories = [data.ansible_inventory.k8s_inventory.json]
   }
 }
