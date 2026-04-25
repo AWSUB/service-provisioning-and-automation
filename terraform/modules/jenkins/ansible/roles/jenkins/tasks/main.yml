@@ -1,0 +1,21 @@
+---
+- name: Add Jenkins repo
+  command: >
+    dnf config-manager --add-repo https://pkg.jenkins.io/rpm-stable/jenkins.repo
+  args:
+    creates: /etc/yum.repos.d/jenkins.repo
+
+- name: Install Jenkins and dependencies
+  dnf:
+    name:
+      - fontconfig
+      - java-21-amazon-corretto
+      - jenkins
+    state: present
+
+- name: Enable and start Jenkins
+  systemd:
+    name: jenkins
+    state: started
+    enabled: yes
+    daemon_reload: yes

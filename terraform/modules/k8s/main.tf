@@ -94,7 +94,7 @@ resource "aws_security_group" "k8s_sg" {
     cidr_blocks = [var.my_ip]
   }
 
-  # Allow all traffic within the VPC
+  # Internal traffic
   ingress {
     from_port   = 0
     to_port     = 0
@@ -107,10 +107,10 @@ resource "aws_security_group" "k8s_sg" {
     from_port   = 30000
     to_port     = 32767
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Allow all outbound traffic
+  # Outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
@@ -155,7 +155,7 @@ resource "aws_instance" "k8s_worker" {
 
   tags = {
     Name = "k8s-worker"
-    Role = "node"
+    Role = "worker"
   }
 }
 
@@ -182,25 +182,20 @@ data "ansible_inventory" "k8s_inventory" {
       ansible_ssh_common_args  = "-o StrictHostKeyChecking=no"
     }
   }
-
-  depends_on = [
-    aws_instance.k8s_master,
-    aws_instance.k8s_worker
-  ]
 }
 
 resource "null_resource" "k8s_setup" {
   lifecycle {
     action_trigger {
-      events = [ after_create ]
-      actions = [ action.ansible_playbook_run.k8s_setup ]
+      events  = [after_create, after_update]
+      actions = [action.ansible_playbook_run.k8s_setup_action]
     }
   }
 
-  depends_on = [ data.ansible_inventory.k8s_inventory ]
+  depends_on = [data.ansible_inventory.k8s_inventory]
 }
 
-action "ansible_playbook_run" "k8s_setup" {
+action "ansible_playbook_run" "k8s_setup_action" {
   config {
     playbooks   = ["${path.module}/ansible/site.yml"]
     inventories = [data.ansible_inventory.k8s_inventory.json]

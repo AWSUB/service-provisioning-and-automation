@@ -8,4 +8,4 @@
 - name: Join the Kubernetes cluster
   command: bash /tmp/k8s_join_command.sh
   args:
-    creates: /etc/kubernetes/kubelet.conf  # skip if already joined
+    creates: /etc/kubernetes/kubelet.conf

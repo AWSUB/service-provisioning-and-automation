@@ -37,8 +37,7 @@
 
 - name: Add Docker repo (for containerd.io package)
   command: >
-    dnf config-manager --add-repo
-    https://download.docker.com/linux/centos/docker-ce.repo
+    dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
   args:
     creates: /etc/yum.repos.d/docker-ce.repo
 
