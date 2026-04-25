@@ -105,5 +105,6 @@ action "ansible_playbook_run" "jenkins_setup_action" {
   config {
     playbooks   = ["${path.module}/ansible/site.yml"]
     inventories = [data.ansible_inventory.jenkins_inventory.json]
+    verbosity   = 1
   }
 }

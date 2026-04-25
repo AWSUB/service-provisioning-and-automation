@@ -5,7 +5,7 @@ variable "aws_region" {
 
 variable "instance_type" {
   description = "Instance type for EC2 Jenkins node"
-  default     = "t3.micro"
+  default     = "t3.small"
 }
 
 variable "instance_image" {

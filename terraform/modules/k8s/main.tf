@@ -199,5 +199,6 @@ action "ansible_playbook_run" "k8s_setup_action" {
   config {
     playbooks   = ["${path.module}/ansible/site.yml"]
     inventories = [data.ansible_inventory.k8s_inventory.json]
+    verbosity = 1
   }
 }
