@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/null"
       version = "~> 3.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.2"
+    }
   }
 }
 
@@ -26,8 +30,13 @@ resource "aws_key_pair" "jenkins_key_pair" {
   public_key = file(var.public_key_path)
 }
 
+resource "tls_private_key" "jenkins_to_k8s_key" {
+  algorithm = "ED25519"
+
+}
+
 resource "aws_security_group" "jenkins_security_group" {
-  name        = "jenkins-security-group"
+  name        = "jenkins-sg"
   description = "Security group for Jenkins instance"
 
   # SSH
@@ -65,6 +74,15 @@ resource "aws_instance" "jenkins_instance" {
   key_name               = aws_key_pair.jenkins_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.jenkins_security_group.id]
 
+  user_data = <<-EOF
+              #!/bin/bash
+              echo "${tls_private_key.jenkins_to_k8s_key.public_key_openssh}" > /home/ec2-user/.ssh/id_ed25519.pub
+              echo "${tls_private_key.jenkins_to_k8s_key.private_key_openssh}" > /home/ec2-user/.ssh/id_ed25519
+              chown ec2-user:ec2-user /home/ec2-user/.ssh/id_ed25519.pub
+              chown ec2-user:ec2-user /home/ec2-user/.ssh/id_ed25519
+              chmod 600 /home/ec2-user/.ssh/id_ed25519
+              EOF
+
   root_block_device {
     volume_size = 8
     volume_type = "gp3"
@@ -98,7 +116,7 @@ resource "null_resource" "jenkins_setup" {
     }
   }
 
-  depends_on = [data.ansible_inventory.jenkins_inventory]
+  depends_on = [aws_instance.jenkins_instance]
 }
 
 action "ansible_playbook_run" "jenkins_setup_action" {

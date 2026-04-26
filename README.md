@@ -9,3 +9,5 @@ This repository covers the following:
 3.  Configuration Management (Ansible)
 4.  Infrastructure a Code (Terraform)
 5.  CI/CD Pipeline (Jenkins)
+
+Instruction to run this are written in INSTRUCTION.md

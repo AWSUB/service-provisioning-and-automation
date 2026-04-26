@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-provisioning-and-automation
+  labels:
+    app: service-provisioning-and-automation
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: service-provisioning-and-automation
+  template:
+    metadata:
+      labels:
+        app: service-provisioning-and-automation
+    spec:
+      containers:
+        - name: service-provisioning-and-automation
+          image: whateveraws/personal:service-provisioning-and-automation
+      imagePullSecrets:
+        - name: dockerhub-secret

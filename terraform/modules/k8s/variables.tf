@@ -32,3 +32,8 @@ variable "my_ip" {
   description = "Your IP address for security group rules"
   default     = "0.0.0.0/0"
 }
+
+variable "jenkins_to_k8s_public_key" {
+  description = "Public key from Jenkins module for SSH access to K8s master"
+  type = string
+}

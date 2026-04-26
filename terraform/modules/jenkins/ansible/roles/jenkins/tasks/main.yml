@@ -38,6 +38,19 @@
       - docker
     state: present
 
+- name: Enable and start Docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Add jenkins to docker group
+  user:
+    name: jenkins
+    groups: docker
+    append: yes
+
 - name: Enable and start Jenkins
   systemd:
     name: jenkins

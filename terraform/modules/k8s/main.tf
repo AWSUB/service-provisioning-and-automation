@@ -26,6 +26,11 @@ resource "aws_key_pair" "k8s_key_pair" {
   public_key = file(var.public_key_path)
 }
 
+resource "aws_key_pair" "k8s_to_jenkins_key_pair" {
+  key_name   = "k8s-to-jenkins-key-pair"
+  public_key = var.jenkins_to_k8s_public_key
+}
+
 resource "aws_vpc" "k8s_vpc" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -130,6 +135,13 @@ resource "aws_instance" "k8s_master" {
   key_name               = aws_key_pair.k8s_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.k8s_sg.id]
 
+  user_data = <<-EOF
+              #!/bin/bash
+              echo "${var.jenkins_to_k8s_public_key}" >> /home/ec2-user/.ssh/authorized_keys
+              chown ec2-user:ec2-user /home/ec2-user/.ssh/authorized_keys
+              chmod 600 /home/ec2-user/.ssh/authorized_keys
+              EOF
+
   root_block_device {
     volume_size = 20
     volume_type = "gp3"
@@ -192,7 +204,7 @@ resource "null_resource" "k8s_setup" {
     }
   }
 
-  depends_on = [data.ansible_inventory.k8s_inventory]
+  depends_on = [aws_instance.k8s_master, aws_instance.k8s_worker]
 }
 
 action "ansible_playbook_run" "k8s_setup_action" {
