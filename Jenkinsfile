@@ -64,7 +64,7 @@ pipeline {
                             -o StrictHostKeyChecking=no \
                             -o BatchMode=yes \
                             $SSH_USERNAME@${K8S_MASTER_IP} \
-                            "bash /home/$SSH_USERNAME/deployment/deploy.sh"
+                            "cd /home/$SSH_USERNAME/deployment/ && bash deploy.sh"
                     '''
                 }
             }

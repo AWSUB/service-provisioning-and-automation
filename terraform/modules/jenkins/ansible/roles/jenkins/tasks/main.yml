@@ -1,21 +1,12 @@
 ---
-- name: Add tmp.mount.d folder for tmpfs configuration
-  file:
-    path: /etc/systemd/system/tmp.mount.d
-    state: directory
-
-- name: Change tmpfs size to 1G for Jenkins builds
-  copy:
-    dest: /etc/systemd/system/tmp.mount.d/override.conf
-    content: |
-      [Mount]
-      Options=mode=1777,strictatime,nosuid,nodev,size=1G,nr_inodes=1m
-
-- name: Reload systemd to apply tmpfs changes
-  systemd:
-    daemon_reload: yes
-    state: restarted
-    name: tmp.mount
+- name: Add swap file for Jenkins
+  command: >
+    fallocate -l 1.5G /swapfile && 
+    chmod 600 /swapfile && 
+    mkswap /swapfile && 
+    swapon /swapfile
+  args:
+    creates: /swapfile
 
 - name: Add Jenkins repo
   command: >
