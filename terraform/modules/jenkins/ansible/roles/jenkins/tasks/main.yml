@@ -4,7 +4,8 @@
     fallocate -l 1.5G /swapfile && 
     chmod 600 /swapfile && 
     mkswap /swapfile && 
-    swapon /swapfile
+    swapon /swapfile &&
+    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
   args:
     creates: /swapfile
 
