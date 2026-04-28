@@ -1,13 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = "${env.DOCKER_IMAGE}"
-        DOCKER_TAG = "${env.DOCKER_TAG}"
-
-        K8S_MASTER_IP = "${env.K8S_MASTER_IP}"
-    }
-
     options {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '3'))
@@ -22,12 +15,12 @@ pipeline {
                     usernameVariable: 'DOCKERHUB_USERNAME', 
                     passwordVariable: 'DOCKERHUB_PASSWORD'
                 )]) {
-                    sh """
+                    sh '''
                         echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
                         docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                         docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
                         docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    """
+                    '''
                 }
             }
         }
@@ -39,12 +32,13 @@ pipeline {
                     usernameVariable: 'DOCKERHUB_USERNAME', 
                     passwordVariable: 'DOCKERHUB_PASSWORD'
                 )]) {
-                    sh """
+                    sh '''
                         kubectl create secret docker-registry dockerhub-secret \
                             --docker-server=https://index.docker.io/v1/ \
-                            --docker-username="${DOCKERHUB_USERNAME}" \
-                            --docker-password="${DOCKERHUB_PASSWORD}"
-                    """
+                            --docker-username="$DOCKERHUB_USERNAME" \
+                            --docker-password="$DOCKERHUB_PASSWORD" \
+                            --dry-run=client -o yaml | kubectl apply -f -
+                    '''
                 }
 
                 withCredentials([sshUserPrivateKey(
@@ -52,10 +46,17 @@ pipeline {
                     keyFileVariable: 'SSH_KEY_PATH', 
                     usernameVariable: 'SSH_USERNAME'
                 )]) {
-                    sh """
-                        scp -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no deployment ${SSH_USERNAME}@${K8S_MASTER_IP}:/home/${SSH_USERNAME}/
-                        ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ${SSH_USERNAME}@${K8S_MASTER_IP} 'bash /home/${SSH_USERNAME}/deployment/deploy.sh'
-                    """
+                    sh '''
+                        scp -i $SSH_KEY_PATH \
+                            -o StrictHostKeyChecking=no \
+                            -r ${WORKSPACE}/deployment/ \
+                            $SSH_USERNAME@${K8S_MASTER_IP}:/home/$SSH_USERNAME/
+                        ssh -i $SSH_KEY_PATH \
+                            -o StrictHostKeyChecking=no \
+                            -o BatchMode=yes \
+                            $SSH_USERNAME@${K8S_MASTER_IP} \
+                            'bash /home/$SSH_USERNAME/deployment/deploy.sh'
+                    '''
                 }
             }
         }
@@ -63,9 +64,10 @@ pipeline {
 
     post {
         always {
-            sh """
+            sh '''
                 docker logout || true
-            """
+            '''
+            cleanWs()
         }
     }
 }

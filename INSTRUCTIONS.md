@@ -16,6 +16,7 @@ Steps:
 3.  ```cd``` to the source code directory that has just been cloned
 4.  Configure Git so that it has access to your fork
 5.  Login to AWS Console using ```aws login```
+6.  Add your ssh key using ```ssh-add``` if you use passphrase to lock the private key
 
 ## Scaffold AWS EC2 K8S and Jenkins Instances
 
@@ -50,3 +51,33 @@ Configure Jenkins Nodes:
 
 Configure Jenkins Credentials:
 1.  Open Manage Jenkins -> Credentials
+2.  Add Credentials -> Username with password
+3.  Add your Docker Hub username and password (Personal Access Token), then ID as ```dockerhub-credentials``` -> Create
+4.  Connect to your jenkins instance then run ```cat ~/.ssh/id_ed25519```, and copy the result (This is your SSH private key)
+5.  Add Credentials -> SSH Username with private key
+6.  Add username as ec2-user and for private key paste the result from step 4, then ID as ```k8s-ssh-key``` -> Create
+
+Configure Jenkins environment variables:
+1.  Open Manage Jenkins -> System
+2.  On Global properties -> Check Environment variables
+3.  Add environment variable with:
+    -   Name: ```DOCKER_IMAGE```, Value: \<your docker image name\>
+    -   Name: ```DOCKER_TAG```,
+    Value: \<your docker tag name\>
+    -   Name:
+    ```K8S_MASTER_IP```, Value: \<your k8s master ip address\>
+4.  Apply and Save
+
+Create Jenkins job:
+1.  Create a job -> Item name fill accordingly -> Item type Pipeline -> Ok
+2.  On Triggers -> Check Github hook trigger for GITScm polling
+3.  On Pipeline Definition -> Change to Pipeline script from SCM
+4.  Select SCM using Git -> Repository URL using your GitHub repository fork url -> Branch to buiild change to ```*/main```
+
+Create webhook for Jenkins job:
+1.  Go to your GitHub repository fork -> Settings -> Webhooks
+2.  Add webhook -> Verify your account if asked
+3.  Payload URL use the default jenkins url then add /github-webhook (http://\<your jenkins url\>/github-webhook/)
+4.  Content type use application/json
+5.  Disable SSL verification (We don't setup SSL certificate here)
+6.  Add webhook
