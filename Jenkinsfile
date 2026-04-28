@@ -31,13 +31,21 @@ pipeline {
                     credentialsId: 'dockerhub-credentials', 
                     usernameVariable: 'DOCKERHUB_USERNAME', 
                     passwordVariable: 'DOCKERHUB_PASSWORD'
+                ), sshUserPrivateKey(
+                    credentialsId: 'k8s-ssh-key', 
+                    keyFileVariable: 'SSH_KEY_PATH', 
+                    usernameVariable: 'SSH_USERNAME'
                 )]) {
                     sh '''
-                        kubectl create secret docker-registry dockerhub-secret \
-                            --docker-server=https://index.docker.io/v1/ \
-                            --docker-username="$DOCKERHUB_USERNAME" \
-                            --docker-password="$DOCKERHUB_PASSWORD" \
-                            --dry-run=client -o yaml | kubectl apply -f -
+                        ssh -i $SSH_KEY_PATH \
+                            -o StrictHostKeyChecking=no \
+                            -o BatchMode=yes \
+                            $SSH_USERNAME@${K8S_MASTER_IP} \
+                            'kubectl create secret docker-registry dockerhub-secret \
+                                --docker-server=https://index.docker.io/v1/ \
+                                --docker-username="$DOCKERHUB_USERNAME" \
+                                --docker-password="$DOCKERHUB_PASSWORD" \
+                                --dry-run=client -o yaml | kubectl apply -f -'
                     '''
                 }
 
