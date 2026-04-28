@@ -17,7 +17,7 @@ pipeline {
                 )]) {
                     sh '''
                         echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-                        docker build -m 1g --cpus="1.5" -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        docker build -m 1g -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                         docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
                         docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG}
                     '''
