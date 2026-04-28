@@ -41,11 +41,11 @@ pipeline {
                             -o StrictHostKeyChecking=no \
                             -o BatchMode=yes \
                             $SSH_USERNAME@${K8S_MASTER_IP} \
-                            'kubectl create secret docker-registry dockerhub-secret \
+                            "kubectl create secret docker-registry dockerhub-secret \
                                 --docker-server=https://index.docker.io/v1/ \
                                 --docker-username="$DOCKERHUB_USERNAME" \
                                 --docker-password="$DOCKERHUB_PASSWORD" \
-                                --dry-run=client -o yaml | kubectl apply -f -'
+                                --dry-run=client -o yaml | kubectl apply -f -"
                     '''
                 }
 
@@ -63,7 +63,7 @@ pipeline {
                             -o StrictHostKeyChecking=no \
                             -o BatchMode=yes \
                             $SSH_USERNAME@${K8S_MASTER_IP} \
-                            'bash /home/$SSH_USERNAME/deployment/deploy.sh'
+                            "bash /home/$SSH_USERNAME/deployment/deploy.sh"
                     '''
                 }
             }
