@@ -20,6 +20,7 @@ pipeline {
                         docker build -m=1g --cpu-period=100000 --cpu-quota=50000 --load -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                         docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
                         docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        docker builder prune -f --filter "until=6h" || true
                     '''
                 }
             }
