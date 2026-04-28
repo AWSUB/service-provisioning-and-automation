@@ -17,5 +17,6 @@ spec:
       containers:
         - name: service-provisioning-and-automation
           image: whateveraws/personal:service-provisioning-and-automation
+          imagePullPolicy: Always
       imagePullSecrets:
         - name: dockerhub-secret
