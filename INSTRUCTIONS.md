@@ -81,3 +81,15 @@ Create webhook for Jenkins job:
 4.  Content type use application/json
 5.  Disable SSL verification (We don't setup SSL certificate here)
 6.  Add webhook
+
+## Test Pipeline
+
+This part is to test the pipeline
+
+Steps:
+1.  Make a change in your local repository.
+2.  ```git add .``` to add your change to staging.
+3.  ```git commit -m "<your message>"``` to commit your change.
+4.  ```git push -u origin main``` to push your change to remote repository.
+5.  Watch the build and deployment from jenkins dashboard.
+6.  After the previous steps completes, go to the k8s master node and check if the application actually deployed.
