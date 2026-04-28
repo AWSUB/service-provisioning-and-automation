@@ -17,8 +17,7 @@ pipeline {
                 )]) {
                     sh '''
                         echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-                        docker buildx create --name=my_builder --driver=docker-container --driver-opt=memory=1G,cpu-shares=16 --bootstrap --use --node
-                        docker buildx build --load -t ${DOCKER_IMAGE}:${DOCKER_TAG} . --builder my_builder
+                        docker build -m=1g --cpu-period=100000 --cpu-quota=50000 --load -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                         docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
                         docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG}
                     '''
